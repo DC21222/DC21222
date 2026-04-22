@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IRC :: NEWCOMER'S GUIDE // v1.0</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=VT323&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #000000;
+    --bg-soft: #050a05;
+    --green: #33ff66;
+    --green-dim: #1faa44;
+    --green-dark: #0a3a14;
+    --green-glow: rgba(51, 255, 102, 0.55);
+    --amber: #ffb000;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    background: var(--bg);
+    color: var(--green);
+    font-family: 'Share Tech Mono', 'VT323', 'Courier New', monospace;
+    font-size: 16px;
+    line-height: 1.55;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* CRT scanlines overlay */
+  body::before {
+    content: "";
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: repeating-linear-gradient(
+      to bottom,
+      rgba(0, 0, 0, 0) 0px,
+      rgba(0, 0, 0, 0) 2px,
+      rgba(0, 0, 0, 0.25) 3px,
+      rgba(0, 0, 0, 0.25) 4px
+    );
+    pointer-events: none;
+    z-index: 100;
+    mix-blend-mode: multiply;
+  }
+
+  /* Subtle phosphor flicker */
+  body::after {
+    content: "";
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: radial-gradient(ellipse at center, transparent 0%, rgba(0, 20, 0, 0.35) 100%);
+    pointer-events: none;
+    z-index: 99;
+    animation: flicker 7s infinite;
+  }
+
+  @keyframes flicker {
+    0%, 100% { opacity: 1; }
+    48% { opacity: 1; }
+    50% { opacity: 0.93; }
+    52% { opacity: 1; }
+    70% { opacity: 0.97; }
+  }
+
+  .terminal {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 40px 28px 80px;
+    position: relative;
+    z-index: 1;
+    text-shadow:
+      0 0 2px var(--green-glow),
+      0 0 6px rgba(51, 255, 102, 0.25);
+  }
+
+  /* ASCII art header */
+  pre.ascii {
+    font-family: 'VT323', monospace;
+    font-size: 14px;
+    line-height: 1.05;
+    color: var(--green);
+    white-space: pre;
+    overflow-x: auto;
+    margin-bottom: 12px;
+    text-shadow:
+      0 0 4px var(--green-glow),
+      0 0 10px rgba(51, 255, 102, 0.4);
+  }
+
+  .bootline {
+    color: var(--green-dim);
+    font-size: 14px;
+    margin-bottom: 4px;
+    opacity: 0;
+    animation: typeIn 0.6s forwards;
+  }
+  .bootline:nth-child(2) { animation-delay: 0.1s; }
+  .bootline:nth-child(3) { animation-delay: 0.2s; }
+  .bootline:nth-child(4) { animation-delay: 0.3s; }
+  .bootline:nth-child(5) { animation-delay: 0.4s; }
+
+  @keyframes typeIn {
+    from { opacity: 0; transform: translateX(-4px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  .hr {
+    border: none;
+    border-top: 1px dashed var(--green-dim);
+    margin: 28px 0;
+    opacity: 0.6;
+  }
+
+  .hr-double {
+    border: none;
+    border-top: 3px double var(--green);
+    margin: 32px 0;
+    opacity: 0.8;
+  }
+
+  h1 {
+    font-family: 'VT323', monospace;
+    font-size: 42px;
+    letter-spacing: 2px;
+    color: var(--green);
+    margin: 18px 0 8px;
+    text-shadow:
+      0 0 6px var(--green-glow),
+      0 0 14px rgba(51, 255, 102, 0.5);
+  }
+
+  h2 {
+    font-family: 'VT323', monospace;
+    font-size: 28px;
+    letter-spacing: 1px;
+    margin: 42px 0 16px;
+    padding: 4px 10px;
+    background: var(--green);
+    color: var(--bg);
+    display: inline-block;
+    text-shadow: none;
+    box-shadow: 0 0 12px var(--green-glow);
+  }
+
+  h2::before { content: "▓▒░ "; }
+  h2::after  { content: " ░▒▓"; }
+
+  h3 {
+    font-size: 18px;
+    color: var(--amber);
+    margin: 24px 0 10px;
+    letter-spacing: 1px;
+    text-shadow: 0 0 4px rgba(255, 176, 0, 0.5);
+  }
+
+  h3::before {
+    content: ">> ";
+    color: var(--green);
+  }
+
+  p, li {
+    margin-bottom: 10px;
+    color: var(--green);
+  }
+
+  ul, ol {
+    margin: 0 0 14px 28px;
+  }
+
+  li { margin-bottom: 6px; }
+
+  ul li::marker { content: "▸ "; color: var(--green-dim); }
+
+  a {
+    color: var(--amber);
+    text-decoration: none;
+    border-bottom: 1px dotted var(--amber);
+    transition: all 0.15s;
+  }
+
+  a:hover {
+    background: var(--amber);
+    color: var(--bg);
+    text-shadow: none;
+  }
+
+  strong, b {
+    color: #aaffaa;
+    font-weight: normal;
+    text-shadow: 0 0 5px var(--green-glow);
+  }
+
+  em { color: var(--amber); font-style: normal; }
+
+  code {
+    background: var(--green-dark);
+    color: #ccffcc;
+    padding: 1px 6px;
+    border-radius: 2px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 14px;
+    border: 1px solid var(--green-dim);
+  }
+
+  pre.block {
+    background: var(--bg-soft);
+    border: 1px solid var(--green-dim);
+    border-left: 4px solid var(--green);
+    padding: 14px 18px;
+    margin: 14px 0;
+    overflow-x: auto;
+    font-size: 14px;
+    color: #ccffcc;
+    box-shadow:
+      inset 0 0 20px rgba(51, 255, 102, 0.08),
+      0 0 8px rgba(51, 255, 102, 0.12);
+    position: relative;
+  }
+
+  pre.block::before {
+    content: "$ ";
+    color: var(--amber);
+  }
+
+  pre.block.no-prompt::before { content: ""; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 14px 0 22px;
+    font-size: 14px;
+  }
+
+  th, td {
+    border: 1px solid var(--green-dim);
+    padding: 8px 12px;
+    text-align: left;
+  }
+
+  th {
+    background: var(--green-dark);
+    color: #ccffcc;
+    font-weight: normal;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  tr:nth-child(even) td { background: rgba(51, 255, 102, 0.04); }
+
+  .callout {
+    border: 1px dashed var(--amber);
+    padding: 12px 16px;
+    margin: 18px 0;
+    background: rgba(255, 176, 0, 0.04);
+    color: var(--amber);
+  }
+
+  .callout::before {
+    content: "[ ! ] ";
+    font-weight: bold;
+  }
+
+  .section-num {
+    font-family: 'VT323', monospace;
+    color: var(--green-dim);
+    font-size: 20px;
+    margin-right: 8px;
+  }
+
+  .cursor {
+    display: inline-block;
+    width: 10px;
+    height: 18px;
+    background: var(--green);
+    vertical-align: middle;
+    animation: blink 1s step-end infinite;
+    box-shadow: 0 0 6px var(--green-glow);
+  }
+
+  @keyframes blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0; }
+  }
+
+  .prompt {
+    color: var(--amber);
+    user-select: none;
+  }
+
+  footer {
+    margin-top: 50px;
+    padding-top: 20px;
+    border-top: 1px dashed var(--green-dim);
+    font-size: 13px;
+    color: var(--green-dim);
+    text-align: center;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 12px; height: 12px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb {
+    background: var(--green-dim);
+    border: 2px solid var(--bg);
+  }
+  ::-webkit-scrollbar-thumb:hover { background: var(--green); }
+
+  @media (max-width: 640px) {
+    pre.ascii { font-size: 8px; }
+    h1 { font-size: 28px; }
+    h2 { font-size: 20px; }
+    .terminal { padding: 20px 14px 50px; }
+  }
+</style>
+</head>
+<body>
+<main class="terminal">
+
+<pre class="ascii">
+ ██╗██████╗  ██████╗    ██╗  ██╗ ██████╗ ██╗    ██╗████████╗ ██████╗
+ ██║██╔══██╗██╔════╝    ██║  ██║██╔═══██╗██║    ██║╚══██╔══╝██╔═══██╗
+ ██║██████╔╝██║         ███████║██║   ██║██║ █╗ ██║   ██║   ██║   ██║
+ ██║██╔══██╗██║         ██╔══██║██║   ██║██║███╗██║   ██║   ██║   ██║
+ ██║██║  ██║╚██████╗    ██║  ██║╚██████╔╝╚███╔███╔╝   ██║   ╚██████╔╝
+ ╚═╝╚═╝  ╚═╝ ╚═════╝    ╚═╝  ╚═╝ ╚═════╝  ╚══╝╚══╝    ╚═╝    ╚═════╝
+</pre>
+
+<div class="bootline">[ OK ] loading newcomer.txt ................... done</div>
+<div class="bootline">[ OK ] initializing phosphor display .............. done</div>
+<div class="bootline">[ OK ] warming CRT .............................. done</div>
+<div class="bootline">[ OK ] you have (1) new transmission</div>
+
+<hr class="hr-double">
+
+<h1>:: HOW TO CONNECT TO IRC ::</h1>
+<p style="color: var(--green-dim); letter-spacing: 2px;">A COMPLETE GUIDE FOR NEWCOMERS &mdash; rev. 1.0</p>
+
+<hr class="hr">
+
+<h2>01 :: PICK A CLIENT</h2>
+<p>An IRC client is the program you use to connect. Pick one based on your vibe:</p>
+
+<h3>Easiest (graphical, beginner-friendly)</h3>
+<ul>
+  <li><strong>HexChat</strong> &mdash; free, works on Windows/Mac/Linux, has Libera.Chat preconfigured. Start here if unsure. <a href="https://hexchat.github.io">hexchat.github.io</a></li>
+  <li><strong>Quassel</strong> &mdash; another solid GUI option, has built-in bouncer support</li>
+</ul>
+
+<h3>Old-school (terminal-based, maximum hacker feels)</h3>
+<ul>
+  <li><strong>irssi</strong> &mdash; the classic. <code>sudo apt install irssi</code> or <code>brew install irssi</code></li>
+  <li><strong>WeeChat</strong> &mdash; more modern, nicer defaults. <code>sudo apt install weechat</code> or <code>brew install weechat</code></li>
+</ul>
+
+<h3>Mobile</h3>
+<ul>
+  <li><strong>Colloquy</strong> (iOS), <strong>Revolution IRC</strong> (Android), or the <strong>IRCCloud</strong> app</li>
+</ul>
+
+<h3>Web-based (zero install)</h3>
+<ul>
+  <li><a href="https://web.libera.chat">web.libera.chat</a> &mdash; opens in your browser, works instantly</li>
+</ul>
+
+<hr class="hr">
+
+<h2>02 :: CONNECT TO LIBERA.CHAT</h2>
+
+<h3>HexChat</h3>
+<ol>
+  <li>Launch HexChat. The Network List appears automatically.</li>
+  <li>Set your nickname in the top field (if taken, you'll get auto-renamed to <code>nick_</code>).</li>
+  <li>Scroll down, find <strong>Libera.Chat</strong>, click it.</li>
+  <li>Click <strong>Connect</strong>.</li>
+  <li>You're in. Welcome message from the server scrolls by.</li>
+</ol>
+
+<h3>irssi</h3>
+<pre class="block">irssi
+/connect irc.libera.chat</pre>
+
+<p>Want to set your nick first?</p>
+<pre class="block">/set nick yourdesirednick
+/connect irc.libera.chat</pre>
+
+<h3>Web client</h3>
+<p>Go to <a href="https://web.libera.chat">web.libera.chat</a>, type a nickname, optionally a channel, click Connect. Done.</p>
+
+<hr class="hr">
+
+<h2>03 :: REGISTER YOUR NICKNAME</h2>
+
+<p>Registering claims your nick permanently and gets you a <em>cloak</em> (hides your IP). Do this first, before anything else.</p>
+
+<p>Pick a strong password &mdash; you'll use it often.</p>
+
+<pre class="block no-prompt"><span class="prompt">irc&gt;</span> /msg NickServ REGISTER yourpassword your@email.com</pre>
+
+<p>Libera sends a verification email within a minute or two. Check inbox (and spam). It contains a command like:</p>
+
+<pre class="block no-prompt"><span class="prompt">irc&gt;</span> /msg NickServ VERIFY REGISTER yournick abc123xyz</pre>
+
+<p>Copy that line into IRC and send it. You'll see <em>"You have now verified..."</em> &mdash; congratulations, you're registered.</p>
+
+<p>From now on, every time you connect you'll log in with:</p>
+
+<pre class="block no-prompt"><span class="prompt">irc&gt;</span> /msg NickServ IDENTIFY yourpassword</pre>
+
+<p>Or better &mdash; set up <strong>SASL</strong> (next section) so this happens automatically.</p>
+
+<hr class="hr">
+
+<h2>04 :: SET UP SASL (AUTO-LOGIN)</h2>
+
+<p>SASL authenticates you <em>during</em> the connection, before you're visible to anyone. This gets you cloaked instantly and saves typing.</p>
+
+<h3>HexChat</h3>
+<ol>
+  <li>Network List &rarr; select <strong>Libera.Chat</strong> &rarr; <strong>Edit</strong></li>
+  <li><strong>Login method</strong>: choose <code>SASL (PLAIN)</code></li>
+  <li><strong>Username</strong>: your registered nick</li>
+  <li><strong>Password</strong>: your NickServ password</li>
+  <li>Close, reconnect. Auto-logged-in forever.</li>
+</ol>
+
+<h3>irssi</h3>
+<pre class="block">/network add -sasl_username yournick -sasl_password yourpass -sasl_mechanism PLAIN Libera
+/server add -auto -network Libera irc.libera.chat 6697
+/save</pre>
+
+<h3>WeeChat</h3>
+<pre class="block">/set irc.server.libera.sasl_username "yournick"
+/set irc.server.libera.sasl_password "yourpass"
+/set irc.server.libera.sasl_mechanism plain
+/save</pre>
+
+<h3>Web client</h3>
+<p>Click the gear icon &rarr; enter nick + password in the SASL fields.</p>
+
+<hr class="hr">
+
+<h2>05 :: JOIN THE CHANNEL</h2>
+
+<p>Once connected and identified:</p>
+
+<pre class="block no-prompt"><span class="prompt">irc&gt;</span> /join #channelname</pre>
+
+<p>Replace <code>#channelname</code> with whatever the sysop gave you. The <code>#</code> is required &mdash; it's how IRC knows it's a channel.</p>
+
+<p>A new tab/window/pane opens with users on the right and conversation in the middle.</p>
+
+<p>To leave a channel:</p>
+<pre class="block no-prompt"><span class="prompt">irc&gt;</span> /part #channelname</pre>
+
+<p>To disconnect entirely:</p>
+<pre class="block no-prompt"><span class="prompt">irc&gt;</span> /quit optional goodbye message</pre>
+
+<hr class="hr">
+
+<h2>06 :: THE 15 COMMANDS YOU NEED</h2>
+
+<table>
+  <thead>
+    <tr><th>Command</th><th>What it does</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>/join #channel</code></td><td>Join a channel</td></tr>
+    <tr><td><code>/part #channel</code></td><td>Leave a channel</td></tr>
+    <tr><td><code>/msg nick text</code></td><td>Send a private message</td></tr>
+    <tr><td><code>/query nick</code></td><td>Open a private chat window</td></tr>
+    <tr><td><code>/whois nick</code></td><td>See info about a user</td></tr>
+    <tr><td><code>/nick newname</code></td><td>Change your nickname</td></tr>
+    <tr><td><code>/away reason</code></td><td>Mark yourself as away</td></tr>
+    <tr><td><code>/away</code></td><td>Come back from away</td></tr>
+    <tr><td><code>/me action</code></td><td>Emote (e.g. <code>/me waves</code>)</td></tr>
+    <tr><td><code>/topic</code></td><td>See current channel topic</td></tr>
+    <tr><td><code>/names</code></td><td>List everyone in the channel</td></tr>
+    <tr><td><code>/ignore nick</code></td><td>Hide a user's messages</td></tr>
+    <tr><td><code>/list</code></td><td>List public channels (huge output)</td></tr>
+    <tr><td><code>/help cmd</code></td><td>Client-specific help</td></tr>
+    <tr><td><code>/quit msg</code></td><td>Disconnect</td></tr>
+  </tbody>
+</table>
+
+<hr class="hr">
+
+<h2>07 :: ETIQUETTE</h2>
+
+<p>A few things that'll keep you from looking like a newbie:</p>
+
+<ul>
+  <li><strong>Don't say "hi everyone" and wait for a response.</strong> Just ask your actual question.</li>
+  <li><strong>Don't paste more than 3&ndash;4 lines</strong> into the channel. Use <a href="https://bpa.st">bpa.st</a>, <a href="https://paste.rs">paste.rs</a>, or <a href="https://termbin.com">termbin.com</a>.</li>
+  <li><strong>Don't use color codes or ALL CAPS</strong> unless the channel does.</li>
+  <li><strong>Be patient.</strong> Someone will reply in 10 minutes, or 2 hours, or tomorrow. Normal.</li>
+  <li><strong>Lurk before you leap.</strong> Every channel has its own personality.</li>
+  <li><strong>Don't private-message strangers</strong> without asking in-channel first.</li>
+  <li><code>/msg NickServ HELP</code> and <code>/msg ChanServ HELP</code> when confused.</li>
+</ul>
+
+<hr class="hr">
+
+<h2>08 :: TROUBLESHOOTING</h2>
+
+<div class="callout"><strong>"Nickname is already in use"</strong> &mdash; someone has your nick. Try another, or if it's your stuck session: <code>/msg NickServ GHOST yournick yourpass</code></div>
+
+<div class="callout"><strong>"Cannot join channel (+r)"</strong> &mdash; requires registered nicks. Register and identify first.</div>
+
+<div class="callout"><strong>"Cannot join channel (+i)"</strong> &mdash; invite-only. Ask an op.</div>
+
+<div class="callout"><strong>Connection keeps dropping</strong> &mdash; try port <code>6697</code> (TLS) instead of <code>6667</code>. Always use TLS.</div>
+
+<div class="callout"><strong>Can't find verification email</strong> &mdash; check spam. Still missing? Ask in <code>#libera</code>.</div>
+
+<div class="callout"><strong>Messages aren't sending</strong> &mdash; you might not be identified. <code>/msg NickServ IDENTIFY yourpassword</code></div>
+
+<hr class="hr">
+
+<h2>09 :: NEXT STEPS</h2>
+
+<p>Once you're comfortable:</p>
+
+<ul>
+  <li>Set up a <strong>ZNC bouncer</strong> so you never miss messages offline</li>
+  <li>Learn your client's <strong>scripting</strong> &mdash; irssi and WeeChat are infinitely customizable</li>
+  <li>Enable <strong>local logging</strong> for a personal archive</li>
+  <li>Try <strong>Tor</strong> connection to Libera's onion service for strong privacy</li>
+  <li>Hop into other channels &mdash; <code>#linux</code>, <code>#python</code>, <code>##hardware</code>. IRC is still alive in the right places.</li>
+</ul>
+
+<hr class="hr-double">
+
+<h2>TL;DR FOR THE IMPATIENT</h2>
+
+<ol>
+  <li>Install HexChat</li>
+  <li>Connect to Libera.Chat with a nickname</li>
+  <li><code>/msg NickServ REGISTER password email@example.com</code> &rarr; verify via email</li>
+  <li>Configure SASL in Network List for auto-login</li>
+  <li><code>/join #thechannel</code></li>
+  <li>Say hi. Start chatting.</li>
+</ol>
+
+<p style="margin-top: 20px; font-size: 18px; color: var(--amber);">Total time: 15 minutes. Welcome back to the old internet.<span class="cursor"></span></p>
+
+<footer>
+  <p>// END OF TRANSMISSION //</p>
+  <p>LIBERA.CHAT &middot; RFC 1459 &middot; SINCE 1988</p>
+</footer>
+
+</main>
+</body>
+</html>
